@@ -1,0 +1,137 @@
+# DPO Configuration for RLHF Arena
+# Direct Preference Optimization
+
+# Model configuration
+model:
+  checkpoint: "microsoft/DialoGPT-medium"  # Base model checkpoint
+  max_length: 512                          # Maximum sequence length
+  temperature: 1.0                         # Sampling temperature
+  top_p: 0.9                              # Top-p sampling
+  top_k: 50                               # Top-k sampling
+  repetition_penalty: 1.1                 # Repetition penalty
+  do_sample: true                         # Enable sampling
+  pad_token_id: null                      # Padding token ID (auto-detect)
+
+# Training configuration
+training:
+  batch_size: 4                           # Training batch size
+  learning_rate: 1e-5                     # Learning rate
+  num_epochs: 10                          # Number of training epochs
+  gradient_accumulation_steps: 4          # Gradient accumulation steps
+  max_grad_norm: 1.0                     # Maximum gradient norm
+  warmup_steps: 100                      # Warmup steps
+  lr_scheduler: "cosine"                 # Learning rate scheduler
+  weight_decay: 0.01                     # Weight decay
+  
+  # DPO specific parameters
+  beta: 0.1                               # DPO beta parameter (temperature)
+  reference_free: false                   # Use reference-free DPO
+  loss_type: "sigmoid"                    # Loss type (sigmoid, hinge, kendall)
+  max_prompt_length: 512                 # Maximum prompt length
+  max_length: 512                         # Maximum response length
+  
+  # Preference learning
+  preference_model: null                  # External preference model
+  use_peft: false                         # Use Parameter Efficient Fine-tuning
+  peft_config:
+    lora_r: 16                            # LoRA rank
+    lora_alpha: 32                        # LoRA alpha
+    lora_dropout: 0.1                     # LoRA dropout
+
+# Dataset configuration
+dataset:
+  name: "hh"                             # Dataset name (hh, oasst, ultrafeedback)
+  split: "train"                         # Dataset split
+  max_samples: 10000                     # Maximum samples to use
+  validation_split: 0.1                  # Validation split ratio
+  preprocessing:
+    remove_duplicates: true              # Remove duplicate samples
+    filter_by_length: true              # Filter by sequence length
+    min_length: 10                      # Minimum sequence length
+    max_length: 512                     # Maximum sequence length
+  
+  # Preference dataset specific
+  preference_format: "completion"        # Format: completion, conversation
+  chosen_key: "chosen"                   # Key for chosen response
+  rejected_key: "rejected"               # Key for rejected response
+  prompt_key: "prompt"                   # Key for prompt
+
+# Hardware configuration
+hardware:
+  device: "auto"                         # Device (auto, cuda, cpu)
+  mixed_precision: "fp16"                # Mixed precision (fp16, bf16, none)
+  gradient_checkpointing: true           # Enable gradient checkpointing
+  ddp_backend: "nccl"                    # Distributed training backend
+  num_workers: 4                         # DataLoader workers
+  
+  # Memory optimization
+  max_memory: "24GB"                     # Maximum GPU memory
+  memory_efficient_attention: true       # Use memory efficient attention
+  flash_attention: false                 # Use flash attention (if available)
+
+# Logging and monitoring
+logging:
+  output_dir: "experiments/dpo"          # Output directory
+  log_level: "INFO"                      # Log level
+  save_steps: 100                        # Save checkpoint every N steps
+  eval_steps: 200                        # Evaluate every N steps
+  logging_steps: 10                      # Log every N steps
+  
+  # Experiment tracking
+  use_wandb: true                        # Use Weights & Biases
+  wandb_project: "rlhf_arena"            # W&B project name
+  wandb_run_name: "dpo_experiment"       # W&B run name
+  use_tensorboard: true                  # Use TensorBoard
+
+# Evaluation configuration
+evaluation:
+  metrics: ["preference_accuracy", "chosen_reward", "rejected_reward", "reward_gap"]
+  eval_batch_size: 8                     # Evaluation batch size
+  num_eval_samples: 1000                 # Number of evaluation samples
+  save_generations: true                 # Save generated samples
+  
+  # Preference evaluation
+  preference_eval: true                  # Enable preference evaluation
+  human_eval: false                      # Enable human evaluation
+  human_eval_samples: 100               # Number of human eval samples
+  
+  # Reward model evaluation
+  reward_model_eval: true                # Use reward model for evaluation
+  reward_model_checkpoint: null          # Reward model checkpoint
+
+# Checkpointing
+checkpointing:
+  save_dir: "checkpoints/dpo"            # Checkpoint save directory
+  save_best_only: true                   # Save only best model
+  save_last: true                        # Save last checkpoint
+  max_checkpoints: 5                     # Maximum checkpoints to keep
+  
+  # Resume training
+  resume_from: null                      # Resume from checkpoint
+  auto_resume: true                      # Auto-resume from latest
+
+# Hyperparameter search
+hyperparameter_search:
+  enabled: false                         # Enable hyperparameter search
+  method: "optuna"                       # Search method
+  n_trials: 20                           # Number of trials
+  search_space:
+    learning_rate: [1e-6, 1e-4]         # Learning rate range
+    batch_size: [2, 8]                  # Batch size range
+    beta: [0.05, 0.2]                   # Beta parameter range
+    max_length: [256, 1024]             # Max length range
+
+# Advanced DPO features
+advanced:
+  # Multi-objective DPO
+  multi_objective: false                 # Enable multi-objective DPO
+  objectives: ["helpfulness", "harmlessness"]  # Multiple objectives
+  objective_weights: [0.7, 0.3]         # Objective weights
+  
+  # Regularization
+  kl_penalty: 0.0                        # KL divergence penalty
+  entropy_penalty: 0.0                   # Entropy penalty
+  
+  # Curriculum learning
+  curriculum: false                      # Enable curriculum learning
+  curriculum_stages: [0.25, 0.5, 0.75, 1.0]  # Curriculum stages

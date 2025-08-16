@@ -1,0 +1,192 @@
+# Multi-Objective Configuration for RLHF Arena
+# Multi-objective experiments with dual reward models
+
+# Model configuration
+model:
+  checkpoint: "microsoft/DialoGPT-medium"  # Base model checkpoint
+  max_length: 512                          # Maximum sequence length
+  temperature: 1.0                         # Sampling temperature
+  top_p: 0.9                              # Top-p sampling
+  top_k: 50                               # Top-k sampling
+  repetition_penalty: 1.1                 # Repetition penalty
+  do_sample: true                         # Enable sampling
+  pad_token_id: null                      # Padding token ID (auto-detect)
+
+# Multi-objective configuration
+multi_objective:
+  enabled: true                            # Enable multi-objective training
+  objectives: ["helpfulness", "harmlessness"]  # Multiple objectives
+  objective_weights: [0.7, 0.3]           # Objective weights (must sum to 1.0)
+  
+  # Objective-specific configurations
+  helpfulness:
+    reward_model: "anthropic/hh-rlhf"     # Helpfulness reward model
+    weight: 0.7                           # Weight for helpfulness
+    target_reward: 0.8                    # Target reward threshold
+    reward_scale: 1.0                     # Reward scaling
+    
+  harmlessness:
+    reward_model: "anthropic/hh-rlhf"     # Harmlessness reward model
+    weight: 0.3                           # Weight for harmlessness
+    target_reward: 0.9                    # Target reward threshold
+    reward_scale: 1.0                     # Reward scaling
+  
+  # Multi-objective optimization
+  optimization_method: "weighted_sum"      # Method: weighted_sum, pareto, constraint
+  pareto_epsilon: 0.1                     # Pareto epsilon for constraint method
+  constraint_tolerance: 0.05              # Constraint tolerance
+
+# Training configuration
+training:
+  batch_size: 4                           # Training batch size
+  learning_rate: 1e-5                     # Learning rate
+  num_epochs: 10                          # Number of training epochs
+  gradient_accumulation_steps: 4          # Gradient accumulation steps
+  max_grad_norm: 1.0                     # Maximum gradient norm
+  warmup_steps: 100                      # Warmup steps
+  lr_scheduler: "cosine"                 # Learning rate scheduler
+  weight_decay: 0.01                     # Weight decay
+  
+  # Multi-objective specific parameters
+  multi_objective_epochs: 4               # Multi-objective epochs per update
+  target_kl: 0.01                        # Target KL divergence
+  clip_ratio: 0.2                        # Clip ratio
+  gamma: 0.99                            # Discount factor
+  gae_lambda: 0.95                       # GAE lambda parameter
+  entropy_coef: 0.01                     # Entropy coefficient
+  value_coef: 0.5                        # Value function coefficient
+  max_kl: 0.01                           # Maximum KL divergence
+  
+  # Reward configuration
+  reward_scale: 1.0                      # Reward scaling factor
+  reward_normalization: true              # Enable reward normalization
+  reward_clipping: true                   # Enable reward clipping
+  reward_clip_range: [-10, 10]           # Reward clipping range
+  
+  # Adaptive weighting
+  adaptive_weighting: true                # Enable adaptive objective weighting
+  weight_update_frequency: 100            # Weight update frequency
+  weight_learning_rate: 0.01             # Weight learning rate
+
+# Dataset configuration
+dataset:
+  name: "hh"                             # Dataset name (hh, oasst, ultrafeedback)
+  split: "train"                         # Dataset split
+  max_samples: 10000                     # Maximum samples to use
+  validation_split: 0.1                  # Validation split ratio
+  preprocessing:
+    remove_duplicates: true              # Remove duplicate samples
+    filter_by_length: true              # Filter by sequence length
+    min_length: 10                      # Minimum sequence length
+    max_length: 512                     # Maximum sequence length
+  
+  # Multi-objective dataset specific
+  multi_objective_format: "conversation"  # Format: conversation, completion
+  objective_labels: ["helpful", "harmless"]  # Objective labels
+  label_mapping:
+    helpful: [1, 0]                     # Helpful label mapping
+    harmless: [0, 1]                    # Harmless label mapping
+
+# Hardware configuration
+hardware:
+  device: "auto"                         # Device (auto, cuda, cpu)
+  mixed_precision: "fp16"                # Mixed precision (fp16, bf16, none)
+  gradient_checkpointing: true           # Enable gradient checkpointing
+  ddp_backend: "nccl"                    # Distributed training backend
+  num_workers: 4                         # DataLoader workers
+  
+  # Memory optimization
+  max_memory: "24GB"                     # Maximum GPU memory
+  memory_efficient_attention: true       # Use memory efficient attention
+  flash_attention: false                 # Use flash attention (if available)
+
+# Logging and monitoring
+logging:
+  output_dir: "experiments/multiobjective"  # Output directory
+  log_level: "INFO"                      # Log level
+  save_steps: 100                        # Save checkpoint every N steps
+  eval_steps: 200                        # Evaluate every N steps
+  logging_steps: 10                      # Log every N steps
+  
+  # Experiment tracking
+  use_wandb: true                        # Use Weights & Biases
+  wandb_project: "rlhf_arena"            # W&B project name
+  wandb_run_name: "multiobjective_experiment"  # W&B run name
+  use_tensorboard: true                  # Use TensorBoard
+  
+  # Multi-objective specific logging
+  log_objective_weights: true            # Log objective weights
+  log_objective_rewards: true            # Log objective-specific rewards
+  log_pareto_frontier: true              # Log Pareto frontier
+
+# Evaluation configuration
+evaluation:
+  metrics: ["reward_mean", "kl_divergence", "entropy", "objective_balance"]
+  eval_batch_size: 8                     # Evaluation batch size
+  num_eval_samples: 1000                 # Number of evaluation samples
+  save_generations: true                 # Save generated samples
+  
+  # Multi-objective evaluation
+  multi_objective_eval: true             # Enable multi-objective evaluation
+  pareto_efficiency: true                # Evaluate Pareto efficiency
+  objective_balance: true                # Evaluate objective balance
+  
+  # Human evaluation
+  human_eval: false                      # Enable human evaluation
+  human_eval_samples: 100               # Number of human eval samples
+  
+  # Reward model evaluation
+  reward_model_eval: true                # Use reward models for evaluation
+  reward_model_checkpoints:              # Reward model checkpoints
+    helpfulness: "anthropic/hh-rlhf"
+    harmlessness: "anthropic/hh-rlhf"
+
+# Checkpointing
+checkpointing:
+  save_dir: "checkpoints/multiobjective"  # Checkpoint save directory
+  save_best_only: true                   # Save only best model
+  save_last: true                        # Save last checkpoint
+  max_checkpoints: 5                     # Maximum checkpoints to keep
+  
+  # Resume training
+  resume_from: null                      # Resume from checkpoint
+  auto_resume: true                      # Auto-resume from latest
+  
+  # Multi-objective checkpointing
+  save_objective_weights: true           # Save objective weights
+  save_pareto_frontier: true             # Save Pareto frontier
+
+# Hyperparameter search
+hyperparameter_search:
+  enabled: false                         # Enable hyperparameter search
+  method: "optuna"                       # Search method
+  n_trials: 20                           # Number of trials
+  search_space:
+    learning_rate: [1e-6, 1e-4]         # Learning rate range
+    batch_size: [2, 8]                  # Batch size range
+    objective_weights:                   # Objective weight combinations
+      - [0.6, 0.4]
+      - [0.7, 0.3]
+      - [0.8, 0.2]
+
+# Advanced multi-objective features
+advanced:
+  # Pareto optimization
+  pareto_optimization: false             # Enable Pareto optimization
+  pareto_method: "nsga2"                 # Pareto method (nsga2, spea2)
+  pareto_population_size: 100            # Pareto population size
+  
+  # Constraint optimization
+  constraint_optimization: false          # Enable constraint optimization
+  constraint_method: "penalty"            # Constraint method (penalty, barrier)
+  constraint_penalty: 1.0                # Constraint penalty weight
+  
+  # Dynamic weighting
+  dynamic_weighting: false                # Enable dynamic weighting
+  weight_update_strategy: "reward_based"  # Weight update strategy
+  weight_smoothing: 0.9                  # Weight smoothing factor
+  
+  # Multi-task learning
+  multi_task: false                       # Enable multi-task learning
+  task_specific_heads: false              # Use task-specific heads
+  shared_representation: true             # Share representation across tasks
